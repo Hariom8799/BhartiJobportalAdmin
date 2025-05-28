@@ -81,7 +81,7 @@ const ImageSliderForm = () => {
             setSubmitting(true);
             submittingToast = toast.loading(id ? "Updating slider..." : "Creating slider...");
 
-            const apiUrl = id ? `/api/image-sliders/${id}` : `/api/image-sliders`;
+            const apiUrl = id ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/image-sliders/${id}` : `${process.env.NEXT_PUBLIC_BASE_URL}/api/image-sliders`;
             const method = id ? "PUT" : "POST";
 
             const payload = new FormData();
