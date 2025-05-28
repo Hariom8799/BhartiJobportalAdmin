@@ -1,0 +1,245 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Editor from "react-simple-wysiwyg";
+import { Button } from "@mui/material";
+import Link from "next/link";
+import toast from "react-hot-toast"; // Import toast
+
+const AboutUsForm = () => {
+    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        title: "",
+        editor: "",
+        status: "inactive",
+    });
+
+    const [existingImages, setExistingImages] = useState([]); // Already uploaded
+    const [newImages, setNewImages] = useState([]);           // Newly selected files
+    const [newImagePreviews, setNewImagePreviews] = useState([]); // Preview URLs
+
+    useEffect(() => {
+        fetchAboutUs();
+    }, []);
+
+    const fetchAboutUs = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/about-us`);
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                setFormData({
+                    title: result.data.title || "",
+                    editor: result.data.editor || "",
+                    status: result.data.status || "inactive",
+                });
+
+                setExistingImages(result.data.images || []);
+            }
+        } catch (error) {
+            toast.error("Failed to load About Us data");
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    const handleEditorChange = (e) => {
+        setFormData((prev) => ({
+            ...prev,
+            editor: e.target.value,
+        }));
+    };
+
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        setNewImages((prev) => [...prev, ...files]);
+
+        const previewUrls = files.map((file) => URL.createObjectURL(file));
+        setNewImagePreviews((prev) => [...prev, ...previewUrls]);
+    };
+
+    const removeExistingImage = (index) => {
+        setExistingImages((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const removeNewImage = (index) => {
+        setNewImages((prev) => prev.filter((_, i) => i !== index));
+        setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!formData.title || !formData.editor) {
+            toast.error("Title and content are required");
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const payload = new FormData();
+            payload.append("title", formData.title);
+            payload.append("editor", formData.editor);
+            payload.append("status", formData.status);
+
+            // Append new images
+            newImages.forEach((file) => {
+                if (file instanceof File) {
+                    payload.append("images", file);
+                }
+            });
+
+            // Send list of existing images (to keep)
+            payload.append("existingImages", JSON.stringify(existingImages));
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/about-us`, {
+                method: "PUT",
+                body: payload,
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                toast.success("About Us saved successfully!");
+                fetchAboutUs(); // Refresh
+                setNewImages([]);
+                setNewImagePreviews([]);
+            } else {
+                toast.error(`Failed: ${result.message}`);
+            }
+        } catch (error) {
+            toast.error("Error while saving");
+            console.error(error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) return <div className="p-5 text-center">Loading...</div>;
+
+    return (
+        <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+                <h1 className="text-[20px] font-[600]">About Us</h1>
+                <Link href="/">
+                    <Button variant="outlined" className="btn-border">Home</Button>
+                </Link>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+                <div className="flex gap-3 mt-3">
+                    <div className="w-full flex flex-col gap-3">
+                        <div className="card dark:bg-themeDark w-full p-4 dark:border-[rgba(255,255,255,0.1)]">
+                            <h2 className="text-[18px] font-[600] mb-4">Page Content</h2>
+
+                            <div className="col_ mb-4">
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Title*</label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    className="w-full h-[45px] border border-[rgba(0,0,0,0.1)] outline-none focus:border-[rgba(0,0,0,0.6)] rounded-md px-3 bg-gray-100"
+                                    placeholder="About us title"
+                                    required
+                                />
+                            </div>
+
+                            <div className="col_ mb-4">
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Content*</label>
+                                <Editor value={formData.editor} onChange={handleEditorChange} />
+                            </div>
+
+                            <div className="col_ mb-4">
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Upload Images</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleImageChange}
+                                    className="w-full"
+                                />
+
+                                {/* Existing Images */}
+                                {existingImages.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {existingImages.map((img, idx) => (
+                                            <div key={idx} className="relative">
+                                                <img
+                                                    src={img}
+                                                    className="w-[100px] h-[100px] object-cover border rounded"
+                                                    alt="Existing"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeExistingImage(idx)}
+                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* New Image Previews */}
+                                {newImagePreviews.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {newImagePreviews.map((img, idx) => (
+                                            <div key={idx} className="relative">
+                                                <img
+                                                    src={img}
+                                                    className="w-[100px] h-[100px] object-cover border rounded"
+                                                    alt="New Preview"
+                                                />
+                                                <div
+                                                    onClick={() => removeNewImage(idx)}
+                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 cursor-pointer"
+                                                >
+                                                    ×
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="col_ mb-4">
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Status</label>
+                                <select
+                                    name="status"
+                                    value={formData.status}
+                                    onChange={handleChange}
+                                    className="w-full h-[45px] border border-[rgba(0,0,0,0.1)] outline-none focus:border-[rgba(0,0,0,0.6)] rounded-md px-3 bg-gray-100"
+                                >
+                                    <option value="inactive">Inactive</option>
+                                    <option value="active">Active</option>
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 mt-5">
+                                <Button type="submit" className="btn-dark" disabled={submitting}>
+                                    {submitting ? "Saving..." : "Save About Us"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export default AboutUsForm;
