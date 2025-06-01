@@ -1,59 +1,53 @@
-"use client"
-import React, { useState } from 'react';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import { ordersData } from '@/data';
-import { Button } from '@mui/material';
-import { MdOutlineEdit } from "react-icons/md";
+"use client";
+import React, { useState, useEffect } from "react";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
+import { Button, Tooltip } from "@mui/material";
+import { MdOutlineEdit, MdOutlineDeleteOutline } from "react-icons/md";
 import { FaRegEye } from "react-icons/fa";
-import { MdOutlineDeleteOutline } from "react-icons/md";
-import Tooltip from '@mui/material/Tooltip';
-import SearchBox from '@/Components/SearchBox';
+import { PiExportBold } from "react-icons/pi";
+import { IoMdAdd } from "react-icons/io";
+import { LiaFilterSolid } from "react-icons/lia";
+import SearchBox from "@/Components/SearchBox";
+import axios from "axios";
+import dayjs from "dayjs";
+import Link from "next/link";
 
 const columns = [
-    { id: 'orderId', label: 'Order Id', minWidth: 100 },
-    { id: 'Customer', label: 'Customer', minWidth: 250 },
-    {
-        id: 'Items',
-        label: 'Items',
-        minWidth: 80,
-    },
-    {
-        id: 'Price',
-        label: 'Price',
-        minWidth: 100,
-    },
-    {
-        id: 'Created',
-        label: 'Created',
-        minWidth: 170,
-    },
-    {
-        id: 'Modified',
-        label: 'Modified',
-        minWidth: 170,
-    },
-    {
-        id: 'Status',
-        label: 'Status',
-        minWidth: 100,
-    },
-    {
-        id: 'Actions',
-        label: 'Actions',
-        minWidth: 100,
-    }
+    { id: "nameOfPosition", label: "Position", minWidth: 150 },
+    { id: "totalVacancies", label: "Vacancies", minWidth: 80 },
+    { id: "location", label: "Location", minWidth: 180 },
+    { id: "lastDateOfSubmission", label: "Last Date", minWidth: 120 },
+    { id: "postedOn", label: "Posted On", minWidth: 120 },
+    { id: "departmentType", label: "Dept. Type", minWidth: 120 },
+    { id: "department", label: "Department", minWidth: 250 },
 ];
 
 const Orders = () => {
-
+    const [jobs, setJobs] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const fetchJobs = async () => {
+        try {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/department-jobs/all`);
+            if (res.data?.success) {
+                setJobs(res.data.jobs);
+            }
+        } catch (error) {
+            console.error("Failed to fetch jobs:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchJobs();
+    }, []);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -64,117 +58,76 @@ const Orders = () => {
         setPage(0);
     };
 
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+    };
+
+    const filteredJobs = jobs.filter((job) =>
+        job.nameOfPosition.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
-        <div className="card  dark:bg-themeDark w-full p-0 pr-1 pb-5 dark:border-[rgba(255,255,255,0.1)] mt-4">
+        <div className="card w-full py-1 pl-3 pb-5 dark:bg-themeDark dark:border-[rgba(255,255,255,0.1)] mt-4">
             <div className="p-5 flex items-center justify-between">
-                <h2 className="text-[20px] font-bold">Recent Orders</h2>
-                <div className="ml-auto">
-                    <SearchBox placeholder={"Search..."} />
+                <h2 className="text-[20px] font-bold">Department Jobs</h2>
+                <div className="ml-auto flex items-center gap-3">
+                    <Button className="gap-2 btn-border !capitalize" desabled>
+                        <PiExportBold size={20} /> Export
+                    </Button>
                 </div>
             </div>
 
+            <div className="flex items-center justify-between w-full px-5 mb-4">
+                <SearchBox
+                    placeholder="Search jobs..."
+                    width={"500px"}
+                    onSearch={handleSearch}
+                />
+                <Button className="gap-2 btn-border !capitalize">
+                    <LiaFilterSolid size={20} /> Filters
+                </Button>
+            </div>
 
             <TableContainer sx={{ maxHeight: 450 }}>
-                <Table stickyHeader aria-label="sticky table">
+                <Table stickyHeader aria-label="jobs table">
                     <TableHead>
                         <TableRow>
                             {columns.map((column) => (
-                                <TableCell
-                                    key={column.id}
-                                    align={column.align}
-                                    style={{ minWidth: column.minWidth }}
-                                >
+                                <TableCell key={column.id} style={{ minWidth: column.minWidth }}>
                                     {column.label}
                                 </TableCell>
                             ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {ordersData
+                        {filteredJobs
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                            .map((order, index) => {
-                                return (
-                                    <TableRow hover role="checkbox" tabIndex={-1} key={index + "order"}>
-                                        <TableCell>
-                                            #{order?.orderId}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3 w-[300px]">
-
-                                                <span className="flex items-center justify-center rounded-full w-[40px] h-[40px] overflow-hidden">
-                                                    <img src={order?.customer?.avatar} className="w-full h-full object-cover" />
-                                                </span>
-
-                                                <div className="info flex flex-col gap-0">
-                                                    <h3>{order?.customer?.name}</h3>
-                                                    <span className='text-[13px] dark:opacity-75'>{order?.customer?.email}</span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {order?.items}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            ${order?.price}
-                                        </TableCell>
-
-
-                                        <TableCell>
-                                            <h4>{order?.createdAt?.date}</h4>
-                                            <span className='text-[13px] dark:opacity-75'>{order?.createdAt?.time}</span>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <h4>{order?.modifiedAt?.date}</h4>
-                                            <span className='text-[13px] dark:opacity-75'>{order?.modifiedAt?.time}</span>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <div className='flex items-center gap-1'>
-                                                <span className={`flex items-center justify-center w-[10px] h-[10px] rounded-full
-                                                ${order?.status === "cancelled" ? "bg-[#e05858]" : ""}  ${order?.status === "refunded" ? "bg-[#7d7d7d]" : ""} ${order?.status === "completed" ? "bg-[#4ad47a]" : ""} ${order?.status === "pending" ? "bg-[#d5be4c]" : ""}`}></span>
-                                                <span className={`capitalize  ${order?.status === "cancelled" ? "text-[#e05858]" : ""}  ${order?.status === "refunded" ? "text-[#7d7d7d]" : ""} ${order?.status === "completed" ? "text-[#4ad47a]" : ""} ${order?.status === "pending" ? "text-[#d5be4c]" : ""}`}>{order?.status}</span>
-                                            </div>
-                                        </TableCell>
-
-
-                                        <TableCell>
-                                            <div className="flex items-center gap-1 actions w-[150px]">
-                                                <Tooltip title="Edit" placement="top">
-                                                    <Button className="!min-w-[32px] !p-2  !w-[32px] !h-[32px] !text-themeDark dark:!text-gray-100"><MdOutlineEdit size={28} className="text-themeDark dark:!text-gray-100" /></Button>
-                                                </Tooltip>
-
-                                                <Tooltip title="View" placement="top">
-                                                    <Button className="!min-w-[32px]  !w-[32px] !h-[32px] !text-themeDark dark:!text-gray-100"><FaRegEye size={28} className="text-themeDark dark:!text-gray-100" /></Button>
-                                                </Tooltip>
-
-                                                <Tooltip title="Delete" placement="top">
-                                                    <Button className="!min-w-[32px]  !w-[32px] !h-[32px] !text-themeDark  dark:!text-gray-100"><MdOutlineDeleteOutline size={28} className="text-themeDark dark:!text-gray-100" /></Button>
-                                                </Tooltip>
-
-                                            </div>
-                                        </TableCell>
-
-                                    </TableRow>
-                                );
-                            })}
+                            .map((job) => (
+                                <TableRow hover role="checkbox" tabIndex={-1} key={job._id}>
+                                    <TableCell>{job.nameOfPosition}</TableCell>
+                                    <TableCell>{job.totalVacancies}</TableCell>
+                                    <TableCell>{job.location}</TableCell>
+                                    <TableCell>{dayjs(job.lastDateOfSubmission).format("DD MMM YYYY")}</TableCell>
+                                    <TableCell>{dayjs(job.postedOn).format("DD MMM YYYY")}</TableCell>
+                                    <TableCell>{job.departmentType}</TableCell>
+                                    <TableCell>{job.departmentId?.name}</TableCell>       
+                                </TableRow>
+                            ))}
                     </TableBody>
                 </Table>
             </TableContainer>
+
             <TablePagination
                 rowsPerPageOptions={[10, 25, 100]}
                 component="div"
-                count={ordersData.length}
+                count={filteredJobs.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
-
         </div>
-    )
-}
+    );
+};
 
-export default Orders
+export default Orders;

@@ -19,7 +19,7 @@ import ChatTwoToneIcon from '@mui/icons-material/ChatTwoTone';
 export const sidebarMenu = [
     {
         title: "Home Page",
-        href: "/home",
+        href: "/",
         icon: <GridViewTwoToneIcon size={16} />
     },
     {
@@ -32,14 +32,14 @@ export const sidebarMenu = [
         //     { title: "Update", href: "/about/update" }
         // ]
     },
-    {
-        title: "Careers",
-        href: "/careers",
-        icon: <WorkOutlineTwoToneIcon size={16} />,
-        // items: [
-        //     { title: "Listing", href: "/careers/list" }
-        // ]
-    },
+    // {
+    //     title: "Careers",
+    //     href: "/careers",
+    //     icon: <WorkOutlineTwoToneIcon size={16} />,
+    //     // items: [
+    //     //     { title: "Listing", href: "/careers/list" }
+    //     // ]
+    // },
     {
         title: "Contact Us",
         href: "/contact-us",

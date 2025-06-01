@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Editor from "react-simple-wysiwyg";
 import { Button } from "@mui/material";
 import Link from "next/link";
-import toast from "react-hot-toast"; // Import toast
+import toast from "react-hot-toast";
 
 const AboutUsForm = () => {
     const [loading, setLoading] = useState(false);
@@ -12,7 +12,9 @@ const AboutUsForm = () => {
 
     const [formData, setFormData] = useState({
         title: "",
-        editor: "",
+        shortDescription: "",
+        subTitle: "",
+        longDescription: "",
         status: "inactive",
     });
 
@@ -33,7 +35,9 @@ const AboutUsForm = () => {
             if (result.success && result.data) {
                 setFormData({
                     title: result.data.title || "",
-                    editor: result.data.editor || "",
+                    shortDescription: result.data.shortDescription || "",
+                    subTitle: result.data.subTitle || "",
+                    longDescription: result.data.longDescription || "",
                     status: result.data.status || "inactive",
                 });
 
@@ -55,10 +59,10 @@ const AboutUsForm = () => {
         }));
     };
 
-    const handleEditorChange = (e) => {
+    const handleLongDescriptionChange = (e) => {
         setFormData((prev) => ({
             ...prev,
-            editor: e.target.value,
+            longDescription: e.target.value,
         }));
     };
 
@@ -70,11 +74,34 @@ const AboutUsForm = () => {
         setNewImagePreviews((prev) => [...prev, ...previewUrls]);
     };
 
-    const removeExistingImage = (index) => {
-        setExistingImages((prev) => prev.filter((_, i) => i !== index));
+    const removeExistingImage = async (index, imageUrl) => {
+        try {
+            // Call backend to delete image from Cloudinary
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/delete-image`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ imageUrl }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setExistingImages((prev) => prev.filter((_, i) => i !== index));
+                toast.success("Image deleted successfully");
+            } else {
+                toast.error(`Failed to delete image: ${result.message}`);
+            }
+        } catch (error) {
+            toast.error("Error deleting image");
+            console.error(error);
+        }
     };
 
     const removeNewImage = (index) => {
+        // Revoke the preview URL to free memory
+        URL.revokeObjectURL(newImagePreviews[index]);
         setNewImages((prev) => prev.filter((_, i) => i !== index));
         setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
     };
@@ -82,8 +109,8 @@ const AboutUsForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.title || !formData.editor) {
-            toast.error("Title and content are required");
+        if (!formData.title || !formData.shortDescription || !formData.subTitle || !formData.longDescription) {
+            toast.error("All fields are required");
             return;
         }
 
@@ -91,7 +118,9 @@ const AboutUsForm = () => {
             setSubmitting(true);
             const payload = new FormData();
             payload.append("title", formData.title);
-            payload.append("editor", formData.editor);
+            payload.append("shortDescription", formData.shortDescription);
+            payload.append("subTitle", formData.subTitle);
+            payload.append("longDescription", formData.longDescription);
             payload.append("status", formData.status);
 
             // Append new images
@@ -100,9 +129,6 @@ const AboutUsForm = () => {
                     payload.append("images", file);
                 }
             });
-
-            // Send list of existing images (to keep)
-            payload.append("existingImages", JSON.stringify(existingImages));
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/about-us`, {
                 method: "PUT",
@@ -126,6 +152,13 @@ const AboutUsForm = () => {
             setSubmitting(false);
         }
     };
+
+    // Cleanup preview URLs on unmount
+    useEffect(() => {
+        return () => {
+            newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, []);
 
     if (loading) return <div className="p-5 text-center">Loading...</div>;
 
@@ -158,8 +191,33 @@ const AboutUsForm = () => {
                             </div>
 
                             <div className="col_ mb-4">
-                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Content*</label>
-                                <Editor value={formData.editor} onChange={handleEditorChange} />
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Short Description*</label>
+                                <textarea
+                                    name="shortDescription"
+                                    value={formData.shortDescription}
+                                    onChange={handleChange}
+                                    className="w-full h-[100px] border border-[rgba(0,0,0,0.1)] outline-none focus:border-[rgba(0,0,0,0.6)] rounded-md px-3 py-2 bg-gray-100 resize-vertical"
+                                    placeholder="Short description"
+                                    required
+                                />
+                            </div>
+
+                            <div className="col_ mb-4">
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Sub Title*</label>
+                                <input
+                                    type="text"
+                                    name="subTitle"
+                                    value={formData.subTitle}
+                                    onChange={handleChange}
+                                    className="w-full h-[45px] border border-[rgba(0,0,0,0.1)] outline-none focus:border-[rgba(0,0,0,0.6)] rounded-md px-3 bg-gray-100"
+                                    placeholder="Sub title"
+                                    required
+                                />
+                            </div>
+
+                            <div className="col_ mb-4">
+                                <label className="mb-2 block font-[500] text-gray-600 text-[14px]">Long Description*</label>
+                                <Editor value={formData.longDescription} onChange={handleLongDescriptionChange} />
                             </div>
 
                             <div className="col_ mb-4">
@@ -174,44 +232,53 @@ const AboutUsForm = () => {
 
                                 {/* Existing Images */}
                                 {existingImages.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {existingImages.map((img, idx) => (
-                                            <div key={idx} className="relative">
-                                                <img
-                                                    src={img}
-                                                    className="w-[100px] h-[100px] object-cover border rounded"
-                                                    alt="Existing"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeExistingImage(idx)}
-                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        ))}
+                                    <div className="mt-2">
+                                        <h4 className="text-sm font-medium text-gray-600 mb-2">Existing Images</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {existingImages.map((img, idx) => (
+                                                <div key={idx} className="relative">
+                                                    <img
+                                                        src={img}
+                                                        className="w-[100px] h-[100px] object-cover border rounded"
+                                                        alt="Existing"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeExistingImage(idx, img)}
+                                                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-red-600 transition-colors"
+                                                        title="Delete image"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 
                                 {/* New Image Previews */}
                                 {newImagePreviews.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {newImagePreviews.map((img, idx) => (
-                                            <div key={idx} className="relative">
-                                                <img
-                                                    src={img}
-                                                    className="w-[100px] h-[100px] object-cover border rounded"
-                                                    alt="New Preview"
-                                                />
-                                                <div
-                                                    onClick={() => removeNewImage(idx)}
-                                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 cursor-pointer"
-                                                >
-                                                    ×
+                                    <div className="mt-2">
+                                        <h4 className="text-sm font-medium text-gray-600 mb-2">New Images (Preview)</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {newImagePreviews.map((img, idx) => (
+                                                <div key={idx} className="relative">
+                                                    <img
+                                                        src={img}
+                                                        className="w-[100px] h-[100px] object-cover border rounded"
+                                                        alt="New Preview"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeNewImage(idx)}
+                                                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold hover:bg-red-600 transition-colors cursor-pointer"
+                                                        title="Remove image"
+                                                    >
+                                                        ×
+                                                    </button>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -8,16 +8,17 @@ const SiteSettingForm = () => {
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const [form, setForm] = useState({
         siteTitle: "",
-        about: "",
         email: "",
         contactNo: "",
         facebook: "",
         instagram: "",
         twitter: "",
         linkedin: "",
+        iframe: "",
         logo: "",
     });
 
@@ -55,6 +56,46 @@ const SiteSettingForm = () => {
         }
     };
 
+    const handleDeleteLogo = async () => {
+        if (!form.logo || form.logo.startsWith('blob:')) {
+            // If it's a blob URL (newly selected file), just clear it
+            setForm({ ...form, logo: "" });
+            setLogoFile(null);
+            if (logoInputRef.current) {
+                logoInputRef.current.value = "";
+            }
+            return;
+        }
+
+        setDeleteLoading(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/delete-image`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ imageUrl: form.logo }),
+            });
+
+            const json = await res.json();
+            if (json.success) {
+                setForm({ ...form, logo: "" });
+                setLogoFile(null);
+                if (logoInputRef.current) {
+                    logoInputRef.current.value = "";
+                }
+                toast.success("Logo deleted successfully");
+            } else {
+                toast.error(json.message || "Failed to delete logo");
+            }
+        } catch (err) {
+            console.error("Error deleting logo:", err);
+            toast.error("Error deleting logo");
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -62,10 +103,18 @@ const SiteSettingForm = () => {
 
         try {
             const formData = new FormData();
+
+            // Add all form fields except logo to FormData
             Object.entries(form).forEach(([key, value]) => {
-                if (key !== "logo") formData.append(key, value);
+                if (key !== "logo") {
+                    formData.append(key, value || "");
+                }
             });
-            if (logoFile) formData.append("logo", logoFile);
+
+            // Add logo file if a new one was selected
+            if (logoFile) {
+                formData.append("logo", logoFile);
+            }
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/site-setting`, {
                 method: "PUT",
@@ -79,10 +128,15 @@ const SiteSettingForm = () => {
             } else {
                 toast.success("Site settings saved successfully");
                 setLogoFile(null);
+                // Update form with the response data to get the updated logo URL
+                if (json.data) {
+                    setForm(prevForm => ({ ...prevForm, ...json.data }));
+                }
             }
         } catch (err) {
             setError("Server error while saving");
             toast.error("Server error while saving");
+            console.error("Error saving settings:", err);
         } finally {
             setLoading(false);
         }
@@ -119,18 +173,6 @@ const SiteSettingForm = () => {
                         />
                     </div>
 
-                    {/* About */}
-                    <div className="mb-4">
-                        <label className="block font-[500] text-gray-600 text-[14px] mb-1">Write About Something</label>
-                        <textarea
-                            name="about"
-                            rows={4}
-                            value={form.about}
-                            onChange={handleInputChange}
-                            className="w-full p-3 border border-[rgba(0,0,0,0.1)] rounded-md bg-gray-100 outline-none focus:border-[rgba(0,0,0,0.5)] resize-none"
-                        />
-                    </div>
-
                     {/* Email */}
                     <div className="mb-4">
                         <label className="block font-[500] text-gray-600 text-[14px] mb-1">Email ID</label>
@@ -157,15 +199,38 @@ const SiteSettingForm = () => {
                         />
                     </div>
 
+                    {/* Iframe */}
+                    <div className="mb-4">
+                        <label className="block font-[500] text-gray-600 text-[14px] mb-1">Iframe Code</label>
+                        <textarea
+                            name="iframe"
+                            rows={3}
+                            value={form.iframe}
+                            onChange={handleInputChange}
+                            placeholder="Enter iframe embed code"
+                            className="w-full p-3 border border-[rgba(0,0,0,0.1)] rounded-md bg-gray-100 outline-none focus:border-[rgba(0,0,0,0.5)] resize-none"
+                        />
+                    </div>
+
                     {/* Logo */}
                     <div className="mb-4">
                         <label className="block font-[500] text-gray-600 text-[14px] mb-1">Upload Logo</label>
                         {form.logo && (
-                            <img
-                                src={form.logo}
-                                alt="Logo Preview"
-                                className="mb-2 h-[100px] object-contain border rounded"
-                            />
+                            <div className="mb-2 relative inline-block">
+                                <img
+                                    src={form.logo}
+                                    alt="Logo Preview"
+                                    className="h-[100px] object-contain border rounded"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteLogo}
+                                    disabled={deleteLoading}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 disabled:opacity-50"
+                                >
+                                    {deleteLoading ? "..." : "×"}
+                                </button>
+                            </div>
                         )}
                         <input
                             type="file"
