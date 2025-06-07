@@ -19,34 +19,27 @@ const ViewJobNews = () => {
 
             if (result.success) {
                 setJobNews(result.data);
-                toast.success('Job news details fetched successfully!');  // Success toast
+                toast.success('Job news details fetched successfully!');
             } else {
                 console.error('Failed to fetch job news details:', result.message);
-                toast.error('Failed to fetch job news details.');  // Error toast
+                toast.error('Failed to fetch job news details.');
             }
         } catch (error) {
             console.error('Error fetching job news details:', error);
-            toast.error('An error occurred while fetching job news details.');  // Error toast
+            toast.error('An error occurred while fetching job news details.');
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        console.log("ID:", id);
-
         if (id) {
             fetchJobNewsDetails();
         }
     }, [id]);
 
-    if (loading) {
-        return <div className="p-5 text-center">Loading...</div>;
-    }
-
-    if (!jobNews) {
-        return <div className="p-5 text-center">Job news not found</div>;
-    }
+    if (loading) return <div className="p-5 text-center">Loading...</div>;
+    if (!jobNews) return <div className="p-5 text-center">Job news not found</div>;
 
     return (
         <div className="w-full p-5">
@@ -68,8 +61,7 @@ const ViewJobNews = () => {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-[24px] font-[600]">{jobNews.title}</h2>
-                        <div className={`px-3 py-1 rounded-full text-white text-sm ${jobNews.status === "active" ? "bg-green-600" : "bg-yellow-600"
-                            }`}>
+                        <div className={`px-3 py-1 rounded-full text-white text-sm ${jobNews.status === "active" ? "bg-green-600" : "bg-yellow-600"}`}>
                             {jobNews.status}
                         </div>
                     </div>
@@ -93,10 +85,26 @@ const ViewJobNews = () => {
                                     />
                                 </div>
                             </div>
+
+                            {jobNews.document && (
+                                <div className="mt-4">
+                                    <h3 className="font-[500] text-gray-700 mb-2">Document</h3>
+                                    <a
+                                        href={jobNews.document}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 underline"
+                                    >
+                                        View / Download Document
+                                    </a>
+                                </div>
+                            )}
+
                             <div className="mt-4">
                                 <h3 className="font-[500] text-gray-700 mb-2">Created At</h3>
                                 <p>{new Date(jobNews.createdAt).toLocaleString()}</p>
                             </div>
+
                             {jobNews.updatedAt && (
                                 <div className="mt-4">
                                     <h3 className="font-[500] text-gray-700 mb-2">Updated At</h3>
@@ -104,11 +112,13 @@ const ViewJobNews = () => {
                                 </div>
                             )}
                         </div>
+
                         <div className="w-full md:w-2/3">
                             <div className="mb-4">
                                 <h3 className="font-[500] text-gray-700 mb-2">Short Description</h3>
                                 <p className="bg-gray-50 p-3 rounded-md">{jobNews.shortDescription}</p>
                             </div>
+
                             <div>
                                 <h3 className="font-[500] text-gray-700 mb-2">Long Description</h3>
                                 <div

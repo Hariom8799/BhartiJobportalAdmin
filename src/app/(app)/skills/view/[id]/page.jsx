@@ -19,14 +19,14 @@ const ViewSkillData = () => {
 
             if (result.success) {
                 setSkillData(result.data);
-                toast.success('Skill data fetched successfully!');  // Success toast
+                toast.success('Skill data fetched successfully!');
             } else {
                 console.error('Failed to fetch skill data details:', result.message);
-                toast.error('Failed to fetch skill data details.');  // Error toast
+                toast.error('Failed to fetch skill data details.');
             }
         } catch (error) {
             console.error('Error fetching skill data details:', error);
-            toast.error('An error occurred while fetching skill data details.');  // Error toast
+            toast.error('An error occurred while fetching skill data details.');
         } finally {
             setLoading(false);
         }
@@ -52,12 +52,12 @@ const ViewSkillData = () => {
     return (
         <div className="w-full p-5">
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-[20px] font-[600]">View skill Data</h1>
+                <h1 className="text-[20px] font-[600]">View Skill Data</h1>
                 <div className="flex gap-2">
                     <Link href={`/skills/edit/${id}`}>
                         <Button variant="contained" className="btn-dark gap-2">
                             <MdOutlineEdit size={18} /> Edit
-                        </Button> 
+                        </Button>
                     </Link>
                     <Link href="/skills">
                         <Button variant="outlined" className="btn-border">Back to List</Button>
@@ -69,8 +69,7 @@ const ViewSkillData = () => {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-[24px] font-[600]">{skillData.title}</h2>
-                        <div className={`px-3 py-1 rounded-full text-white text-sm ${skillData.status === "active" ? "bg-green-600" : "bg-yellow-600"
-                            }`}>
+                        <div className={`px-3 py-1 rounded-full text-white text-sm ${skillData.status === "active" ? "bg-green-600" : "bg-yellow-600"}`}>
                             {skillData.status}
                         </div>
                     </div>
@@ -84,6 +83,7 @@ const ViewSkillData = () => {
                                     className="w-full h-auto object-cover"
                                 />
                             </div>
+
                             <div className="mt-4">
                                 <h3 className="font-[500] text-gray-700 mb-2">Thumbnail</h3>
                                 <div className="rounded-md overflow-hidden w-32 h-24">
@@ -94,10 +94,27 @@ const ViewSkillData = () => {
                                     />
                                 </div>
                             </div>
+
+                            {/* Document Section Added Here */}
+                            {skillData.document && (
+                                <div className="mt-4">
+                                    <h3 className="font-[500] text-gray-700 mb-2">Document</h3>
+                                    <a
+                                        href={skillData.document}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 underline"
+                                    >
+                                        View / Download Document
+                                    </a>
+                                </div>
+                            )}
+
                             <div className="mt-4">
                                 <h3 className="font-[500] text-gray-700 mb-2">Created At</h3>
                                 <p>{new Date(skillData.createdAt).toLocaleString()}</p>
                             </div>
+
                             {skillData.updatedAt && (
                                 <div className="mt-4">
                                     <h3 className="font-[500] text-gray-700 mb-2">Updated At</h3>
@@ -105,6 +122,7 @@ const ViewSkillData = () => {
                                 </div>
                             )}
                         </div>
+
                         <div className="w-full md:w-2/3">
                             <div className="mb-4">
                                 <h3 className="font-[500] text-gray-700 mb-2">Short Description</h3>

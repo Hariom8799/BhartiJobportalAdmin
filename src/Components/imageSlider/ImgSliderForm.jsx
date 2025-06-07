@@ -1,10 +1,10 @@
 "use client";
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import Editor from "react-simple-wysiwyg";
 import { Button } from "@mui/material";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-
 import toast from "react-hot-toast";
 
 const ImageSliderForm = () => {
@@ -12,6 +12,7 @@ const ImageSliderForm = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         title: "",
@@ -21,6 +22,7 @@ const ImageSliderForm = () => {
 
     const [mainImg, setMainImg] = useState(null);
     const [mainImgPreview, setMainImgPreview] = useState(null);
+    const mainImgInputRef = useRef(null);
 
     useEffect(() => {
         if (id) fetchSliderDetails();
@@ -69,6 +71,46 @@ const ImageSliderForm = () => {
         setMainImgPreview(URL.createObjectURL(file));
     };
 
+    const handleDeleteImage = async () => {
+        if (!mainImgPreview || mainImgPreview.startsWith("blob:")) {
+            // It's a blob (new file), just clear it locally
+            setMainImg(null);
+            setMainImgPreview(null);
+            if (mainImgInputRef.current) {
+                mainImgInputRef.current.value = "";
+            }
+            return;
+        }
+
+        setDeleteLoading(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/delete-image`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ imageUrl: mainImgPreview }),
+            });
+
+            const json = await res.json();
+            if (json.success) {
+                toast.success("Image deleted successfully");
+                setMainImg(null);
+                setMainImgPreview(null);
+                if (mainImgInputRef.current) {
+                    mainImgInputRef.current.value = "";
+                }
+            } else {
+                toast.error(json.message || "Failed to delete image");
+            }
+        } catch (err) {
+            console.error("Error deleting image:", err);
+            toast.error("Error deleting image");
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -76,12 +118,15 @@ const ImageSliderForm = () => {
             toast.error("Please fill in all required fields");
             return;
         }
+
         let submittingToast;
         try {
             setSubmitting(true);
             submittingToast = toast.loading(id ? "Updating slider..." : "Creating slider...");
 
-            const apiUrl = id ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/image-sliders/${id}` : `${process.env.NEXT_PUBLIC_BASE_URL}/api/image-sliders`;
+            const apiUrl = id
+                ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/image-sliders/${id}`
+                : `${process.env.NEXT_PUBLIC_BASE_URL}/api/image-sliders`;
             const method = id ? "PUT" : "POST";
 
             const payload = new FormData();
@@ -147,9 +192,28 @@ const ImageSliderForm = () => {
 
                     <div className="mb-4">
                         <label className="block font-medium text-sm mb-2">Main Image*</label>
-                        <input type="file" accept="image/*" onChange={handleImageChange} />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            ref={mainImgInputRef}
+                        />
                         {mainImgPreview && (
-                            <img src={mainImgPreview} className="w-[150px] mt-2 border rounded" alt="Main Image Preview" />
+                            <div className="relative mt-2 inline-block">
+                                <img
+                                    src={mainImgPreview}
+                                    className="w-[150px] border rounded"
+                                    alt="Main Image Preview"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteImage}
+                                    disabled={deleteLoading}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 disabled:opacity-50"
+                                >
+                                    {deleteLoading ? "..." : "×"}
+                                </button>
+                            </div>
                         )}
                     </div>
 

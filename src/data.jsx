@@ -111,7 +111,7 @@ export const sidebarMenu = [
     },
     {
         title: "Social Media",
-        href: "/social-media",
+        href: "/social-gallery",
         icon: <ShareTwoToneIcon size={16} />
     },
     {

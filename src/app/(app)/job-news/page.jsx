@@ -97,7 +97,7 @@ const JobNewsList = () => {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/recent-job-news/${id}`, {
           method: 'DELETE',
         });
-
+        
         const result = await response.json();
 
         if (result.success) {

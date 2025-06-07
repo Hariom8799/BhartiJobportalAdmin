@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import Link from 'next/link';
@@ -14,12 +14,12 @@ const ViewCertificateData = () => {
     const fetchCertificateDetails = async () => {
         try {
             setLoading(true);
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/state-certificates/${id}`);
             const result = await response.json();
 
             if (result.success) {
                 setCertificateData(result.data);
+                toast.success('Certificate details fetched successfully!');
             } else {
                 toast.error(result.message || 'Failed to fetch certificate details');
                 console.error('Failed to fetch certificate details:', result.message);
@@ -66,8 +66,7 @@ const ViewCertificateData = () => {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-[24px] font-[600]">{certificateData.title}</h2>
-                        <div className={`px-3 py-1 rounded-full text-white text-sm ${certificateData.status === "active" ? "bg-green-600" : "bg-yellow-600"
-                            }`}>
+                        <div className={`px-3 py-1 rounded-full text-white text-sm ${certificateData.status === "active" ? "bg-green-600" : "bg-yellow-600"}`}>
                             {certificateData.status}
                         </div>
                     </div>
@@ -91,10 +90,26 @@ const ViewCertificateData = () => {
                                     />
                                 </div>
                             </div>
+
+                            {certificateData.document && (
+                                <div className="mt-4">
+                                    <h3 className="font-[500] text-gray-700 mb-2">Document</h3>
+                                    <a
+                                        href={certificateData.document}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 underline"
+                                    >
+                                        View / Download Document
+                                    </a>
+                                </div>
+                            )}
+
                             <div className="mt-4">
                                 <h3 className="font-[500] text-gray-700 mb-2">Issued On</h3>
                                 <p>{new Date(certificateData.createdAt).toLocaleString()}</p>
                             </div>
+
                             {certificateData.updatedAt && (
                                 <div className="mt-4">
                                     <h3 className="font-[500] text-gray-700 mb-2">Updated On</h3>
@@ -108,6 +123,7 @@ const ViewCertificateData = () => {
                                 <h3 className="font-[500] text-gray-700 mb-2">Short Description</h3>
                                 <p className="bg-gray-50 p-3 rounded-md">{certificateData.shortDescription}</p>
                             </div>
+
                             <div>
                                 <h3 className="font-[500] text-gray-700 mb-2">Long Description</h3>
                                 <div

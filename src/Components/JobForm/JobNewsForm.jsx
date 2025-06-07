@@ -11,6 +11,9 @@ const JobNewsForm = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [documentFile, setDocumentFile] = useState(null);
+  const [documentPreview, setDocumentPreview] = useState(null);
+
 
   const [formData, setFormData] = useState({
     title: '',
@@ -45,6 +48,7 @@ const JobNewsForm = () => {
         });
         setThumbnailPreview(result.data.thumbnail || null);
         setMainImgPreview(result.data.mainImg || null);
+        setDocumentPreview(result.data.document || null);
         toast.success("Job news details loaded successfully");
       } else {
         toast.error("Failed to load job news details");
@@ -62,6 +66,15 @@ const JobNewsForm = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleDocumentChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setDocumentFile(file);
+      setDocumentPreview(file.name); // Just show file name
+    }
+  };
+  
+
   const handleEditorChange = (e) => {
     setFormData(prev => ({ ...prev, longDescription: e.target.value }));
   };
@@ -78,6 +91,43 @@ const JobNewsForm = () => {
       setMainImgPreview(URL.createObjectURL(file));
     }
   };
+
+  const handleDelete = async (type) => {
+    let urlToDelete;
+    if (type === 'thumbnail') {
+      urlToDelete = thumbnailPreview;
+      setThumbnail(null);
+      setThumbnailPreview(null);
+    } else if (type === 'mainImg') {
+      urlToDelete = mainImgPreview;
+      setMainImg(null);
+      setMainImgPreview(null);
+    } else if (type === 'document') {
+      urlToDelete = documentPreview;
+      setDocumentFile(null);
+      setDocumentPreview(null);
+    }
+
+    if (urlToDelete && urlToDelete.startsWith("http")) {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/delete-image`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ imageUrl: urlToDelete }),
+        });
+
+        const result = await res.json();
+        if (!result.success) {
+          toast.error("Failed to delete file from server.");
+        }
+      } catch (err) {
+        toast.error("Error deleting file.");
+      }
+    }
+  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,6 +152,13 @@ const JobNewsForm = () => {
       payload.append("shortDescription", formData.shortDescription);
       payload.append("longDescription", formData.longDescription);
       payload.append("status", formData.status);
+      if (documentFile) {
+        payload.append("jobDescriptionFile", documentFile);
+      }
+
+      if (!documentFile && documentPreview) {
+        payload.append("existingJobDescriptionFile", documentPreview);
+      }
 
       // Append images as "images[]" for multer.array
       if (thumbnail) payload.append("images", thumbnail);
@@ -182,16 +239,73 @@ const JobNewsForm = () => {
               </div>
 
               <div className="mb-4">
-                <label className='mb-2 block font-[500] text-gray-600 text-[14px]'>Thumbnail*</label>
-                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'thumbnail')} />
-                {thumbnailPreview && <img src={thumbnailPreview} className="w-[150px] mt-2 border rounded" alt="Thumbnail" />}
+                <label className='block font-[500] text-gray-600 text-[14px] mb-1'>Thumbnail*</label>
+                
+                {thumbnailPreview && (
+                  <div className="relative mb-2 inline-block">
+                    <img
+                      src={thumbnailPreview}
+                      className="h-[100px] border object-contain rounded"
+                      alt="Thumbnail"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDelete("thumbnail")}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'thumbnail')} className="w-full" />
               </div>
 
               <div className="mb-4">
-                <label className='mb-2 block font-[500] text-gray-600 text-[14px]'>Main Image*</label>
-                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'mainImg')} />
-                {mainImgPreview && <img src={mainImgPreview} className="w-[150px] mt-2 border rounded" alt="Main" />}
+                <label className='block font-[500] text-gray-600 text-[14px] mb-1'>Main Image*</label>
+                
+                {mainImgPreview && (
+                  <div className="relative mb-2 inline-block">
+                    <img
+                      src={mainImgPreview}
+                      className="h-[100px] border object-contain rounded"
+                      alt="Main Image"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDelete("mainImg")}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'mainImg')} className="w-full" />
               </div>
+
+              <div className="mb-4">
+                <label className='block font-[500] text-gray-600 text-[14px] mb-1'>Job Description File (PDF)</label>
+                {documentPreview && (
+                  <div className="relative mb-2 inline-block">
+                    <a
+                      href={documentPreview}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 underline"
+                    >
+                      View Document
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete("document")}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <input type="file" accept=".pdf,.doc,.docx" onChange={handleDocumentChange} className="w-full" />
+              </div>
+
 
               <div className="mb-4">
                 <label className='mb-2 block font-[500] text-gray-600 text-[14px]'>Status</label>

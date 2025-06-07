@@ -18,11 +18,13 @@ const SkillForm = () => {
     longDescription: '',
     status: 'inactive',
   });
-  
+
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [mainImg, setMainImg] = useState(null);
   const [mainImgPreview, setMainImgPreview] = useState(null);
+  const [documentFile, setDocumentFile] = useState(null);
+  const [documentPreview, setDocumentPreview] = useState(null);
 
   useEffect(() => {
     if (id) fetchSkillDetails();
@@ -45,6 +47,7 @@ const SkillForm = () => {
         });
         setThumbnailPreview(data.data.thumbnail || null);
         setMainImgPreview(data.data.mainImg || null);
+        setDocumentPreview(data.data.document || null);
         toast.success('Skill details loaded successfully');
       } else {
         toast.error('Failed to load skill details');
@@ -76,6 +79,46 @@ const SkillForm = () => {
     } else if (type === 'mainImg') {
       setMainImg(file);
       setMainImgPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleDocumentChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setDocumentFile(file);
+      setDocumentPreview(file.name); // show file name if not uploaded yet
+    }
+  };
+
+  const handleDelete = async (type) => {
+    let urlToDelete;
+    if (type === 'thumbnail') {
+      urlToDelete = thumbnailPreview;
+      setThumbnail(null);
+      setThumbnailPreview(null);
+    } else if (type === 'mainImg') {
+      urlToDelete = mainImgPreview;
+      setMainImg(null);
+      setMainImgPreview(null);
+    } else if (type === 'document') {
+      urlToDelete = documentPreview;
+      setDocumentFile(null);
+      setDocumentPreview(null);
+    }
+
+    if (urlToDelete && urlToDelete.startsWith('http')) {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/delete-image`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: urlToDelete }),
+        });
+
+        const result = await res.json();
+        if (!result.success) toast.error('Failed to delete file from server.');
+      } catch (err) {
+        toast.error('Error deleting file.');
+      }
     }
   };
 
@@ -120,6 +163,13 @@ const SkillForm = () => {
         form.append('existingMainImg', mainImgPreview);
       }
 
+      if (documentFile) {
+        form.append('jobDescriptionFile', documentFile);
+      }
+      if (!documentFile && documentPreview) {
+        form.append('existingJobDescriptionFile', documentPreview);
+      }
+
       const res = await fetch(apiUrl, {
         method,
         body: form,
@@ -159,58 +209,93 @@ const SkillForm = () => {
               <h2 className="text-[18px] font-[600] mb-4">Basic Information</h2>
 
               <div className="mb-4">
-                <label className="block text-[14px] font-[500] text-gray-600 mb-2">Title*</label>
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Title*</label>
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="Enter title"
+                  className="w-full h-[45px] border border-gray-300 rounded-md px-3 bg-gray-100"
                   required
-                  className="w-full h-[45px] px-3 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-[14px] font-[500] text-gray-600 mb-2">Short Description*</label>
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Short Description*</label>
                 <textarea
                   name="shortDescription"
                   value={formData.shortDescription}
                   onChange={handleInputChange}
-                  placeholder="Enter short description"
+                  className="w-full h-[100px] border border-gray-300 rounded-md p-3 bg-gray-100"
                   required
-                  className="w-full h-[100px] p-3 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500"
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-[14px] font-[500] text-gray-600 mb-2">Long Description*</label>
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Long Description*</label>
                 <Editor value={formData.longDescription} onChange={handleEditorChange} />
               </div>
 
               <div className="mb-4">
-                <label className="block text-[14px] font-[500] text-gray-600 mb-2">Thumbnail Image*</label>
-                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'thumbnail')} />
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Thumbnail*</label>
                 {thumbnailPreview && (
-                  <img src={thumbnailPreview} alt="Thumbnail Preview" className="w-[150px] mt-2 border rounded" />
+                  <div className="relative inline-block mb-2">
+                    <img src={thumbnailPreview} className="h-[100px] border object-contain rounded" alt="Thumbnail" />
+                    <button
+                      type="button"
+                      onClick={() => handleDelete('thumbnail')}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                    >
+                      ×
+                    </button>
+                  </div>
                 )}
+                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'thumbnail')} className="w-full" />
               </div>
 
               <div className="mb-4">
-                <label className="block text-[14px] font-[500] text-gray-600 mb-2">Main Image*</label>
-                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'mainImg')} />
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Main Image*</label>
                 {mainImgPreview && (
-                  <img src={mainImgPreview} alt="Main Image Preview" className="w-[150px] mt-2 border rounded" />
+                  <div className="relative inline-block mb-2">
+                    <img src={mainImgPreview} className="h-[100px] border object-contain rounded" alt="Main" />
+                    <button
+                      type="button"
+                      onClick={() => handleDelete('mainImg')}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                    >
+                      ×
+                    </button>
+                  </div>
                 )}
+                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e, 'mainImg')} className="w-full" />
               </div>
 
               <div className="mb-4">
-                <label className="block text-[14px] font-[500] text-gray-600 mb-2">Status</label>
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Job Description File (PDF/Word)</label>
+                {documentPreview && (
+                  <div className="relative mb-2 inline-block">
+                    <a href={documentPreview} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 underline">
+                      View Document
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete("document")}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                <input type="file" accept=".pdf,.doc,.docx" onChange={handleDocumentChange} className="w-full" />
+              </div>
+
+              <div className="mb-4">
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Status</label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full h-[45px] px-3 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:border-gray-500"
+                  className="w-full h-[45px] border border-gray-300 rounded-md px-3 bg-gray-100"
                 >
                   <option value="inactive">Inactive</option>
                   <option value="active">Active</option>
