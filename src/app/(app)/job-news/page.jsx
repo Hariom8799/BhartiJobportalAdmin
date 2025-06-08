@@ -126,9 +126,9 @@ const JobNewsList = () => {
       <div className="p-5 flex items-center justify-between">
         <h2 className="text-[20px] font-bold">Recent Job News</h2>
         <div className="ml-auto flex items-center gap-3">
-          <Button className="gap-2 btn-border !capitalize">
+          {/* <Button className="gap-2 btn-border !capitalize">
             <PiExportBold size={20} /> Export
-          </Button>
+          </Button> */}
           <Link href="/job-news/add">
             <Button className="gap-2 btn-dark !capitalize">
               <IoMdAdd size={20} /> Add Job News

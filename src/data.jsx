@@ -98,17 +98,17 @@ export const sidebarMenu = [
         href : "/image-sliders",
         icon : <RiProductHuntLine size={16} />,
     },
-    {
-        title: "External Links",
-        href: "/external-links",
-        icon: <LinkTwoToneIcon size={16} />,
-        // items: [
-        //     { title: "Add Article", href: "/external-links/add" },
-        //     { title: "Listing", href: "/external-links/list" },
-        //     { title: "Detail", href: "/external-links/detail" },
-        //     { title: "Update", href: "/external-links/update" }
-        // ]
-    },
+    // {
+    //     title: "External Links",
+    //     href: "/external-links",
+    //     icon: <LinkTwoToneIcon size={16} />,
+    //     // items: [
+    //     //     { title: "Add Article", href: "/external-links/add" },
+    //     //     { title: "Listing", href: "/external-links/list" },
+    //     //     { title: "Detail", href: "/external-links/detail" },
+    //     //     { title: "Update", href: "/external-links/update" }
+    //     // ]
+    // },
     {
         title: "Social Media",
         href: "/social-gallery",

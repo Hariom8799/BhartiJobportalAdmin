@@ -18,9 +18,9 @@ const AboutUsForm = () => {
         status: "inactive",
     });
 
-    const [existingImages, setExistingImages] = useState([]); // Already uploaded
-    const [newImages, setNewImages] = useState([]);           // Newly selected files
-    const [newImagePreviews, setNewImagePreviews] = useState([]); // Preview URLs
+    const [existingImages, setExistingImages] = useState([]); 
+    const [newImages, setNewImages] = useState([]);           
+    const [newImagePreviews, setNewImagePreviews] = useState([]); 
 
     useEffect(() => {
         fetchAboutUs();

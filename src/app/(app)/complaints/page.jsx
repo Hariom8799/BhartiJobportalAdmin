@@ -15,7 +15,6 @@ import SearchBox from "@/Components/SearchBox";
 
 const columns = [
     { id: "name", label: "Name", minWidth: 150 },
-    { id: "email", label: "Email", minWidth: 200 },
     { id: "contactNo", label: "Contact", minWidth: 150 },
     { id: "message", label: "Message", minWidth: 300 },
     { id: "status", label: "Status", minWidth: 100 },
@@ -78,9 +77,9 @@ export default function ComplaintList() {
             <div className="p-5 flex items-center justify-between">
                 <h2 className="text-[20px] font-bold">Feedback & Complaints</h2>
                 <div className="ml-auto flex items-center gap-3">
-                    <Button className="gap-2 btn-border !capitalize">
+                    {/* <Button className="gap-2 btn-border !capitalize">
                         <PiExportBold size={20} /> Export
-                    </Button>
+                    </Button> */}
                     <Link href="/">
                         <Button className="gap-2 btn-dark !capitalize">
                             Back to Dashboard
@@ -121,7 +120,6 @@ export default function ComplaintList() {
                                     .map((item) => (
                                         <TableRow hover role="checkbox" tabIndex={-1} key={item._id}>
                                             <TableCell>{item.name}</TableCell>
-                                            <TableCell>{item.email}</TableCell>
                                             <TableCell>{item.contactNo}</TableCell>
                                             <TableCell>
                                                 <div className="max-w-[300px] truncate">{item.message}</div>
