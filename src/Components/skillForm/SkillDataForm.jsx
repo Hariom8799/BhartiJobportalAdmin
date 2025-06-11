@@ -17,6 +17,7 @@ const SkillForm = () => {
     shortDescription: '',
     longDescription: '',
     status: 'inactive',
+    contactNo : ""
   });
 
   const [thumbnail, setThumbnail] = useState(null);
@@ -44,6 +45,7 @@ const SkillForm = () => {
           shortDescription: data.data.shortDescription || '',
           longDescription: data.data.longDescription || '',
           status: data.data.status || 'inactive',
+          contactNo: data.data.contactNo || "",
         });
         setThumbnailPreview(data.data.thumbnail || null);
         setMainImgPreview(data.data.mainImg || null);
@@ -129,6 +131,7 @@ const SkillForm = () => {
       !formData.title ||
       !formData.shortDescription ||
       !formData.longDescription ||
+      !formData.contactNo ||
       (!thumbnail && !thumbnailPreview) ||
       (!mainImg && !mainImgPreview)
     ) {
@@ -152,6 +155,7 @@ const SkillForm = () => {
       form.append('shortDescription', formData.shortDescription);
       form.append('longDescription', formData.longDescription);
       form.append('status', formData.status);
+      form.append('contactNo', formData.contactNo);
 
       if (thumbnail) form.append('images', thumbnail);
       if (mainImg) form.append('images', mainImg);
@@ -214,6 +218,18 @@ const SkillForm = () => {
                   type="text"
                   name="title"
                   value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full h-[45px] border border-gray-300 rounded-md px-3 bg-gray-100"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block font-[500] text-gray-600 text-[14px] mb-2">Contact Number*</label>
+                <input
+                  type="number"
+                  name="contactNo"
+                  value={formData.contactNo}
                   onChange={handleInputChange}
                   className="w-full h-[45px] border border-gray-300 rounded-md px-3 bg-gray-100"
                   required

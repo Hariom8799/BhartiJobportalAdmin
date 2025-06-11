@@ -24,6 +24,7 @@ const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
 
 const columns = [
   { id: 'title', label: 'TITLE', minWidth: 200 },
+  { id: 'contactNo', label: 'CONTACT', minWidth : 200},
   { id: 'thumbnail', label: 'THUMBNAIL', minWidth: 100 },
   {
     id: 'shortDescription',
@@ -182,6 +183,12 @@ const SkillDataList = () => {
                         <TableCell>
                           <div className="flex-col w-[200px]">
                             <h3 className="font-[600]">{skill.title}</h3>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex-col w-[200px]">
+                            <h3 className="font-[600]">{skill.contactNo}</h3>
                           </div>
                         </TableCell>
 

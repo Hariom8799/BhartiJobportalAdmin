@@ -69,6 +69,7 @@ const ViewSkillData = () => {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-[24px] font-[600]">{skillData.title}</h2>
+                        <h2 className="text-[24px] font-[600]">{skillData.contactNo}</h2>
                         <div className={`px-3 py-1 rounded-full text-white text-sm ${skillData.status === "active" ? "bg-green-600" : "bg-yellow-600"}`}>
                             {skillData.status}
                         </div>

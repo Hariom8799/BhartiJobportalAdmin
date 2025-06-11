@@ -9,6 +9,7 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import { Button, Tooltip } from "@mui/material";
 import { MdOutlineEdit, MdOutlineDeleteOutline } from "react-icons/md";
+import { Switch } from "@mui/material";
 import { FaRegEye } from "react-icons/fa";
 import { PiExportBold } from "react-icons/pi";
 import { IoMdAdd } from "react-icons/io";
@@ -26,6 +27,7 @@ const columns = [
     { id: "postedOn", label: "Posted On", minWidth: 120 },
     { id: "departmentType", label: "Dept. Type", minWidth: 120 },
     { id: "department", label: "Department", minWidth: 250 },
+    { id: "visible", label: "Visible", minWidth: 100 }  
 ];
 
 const Orders = () => {
@@ -44,6 +46,27 @@ const Orders = () => {
             console.error("Failed to fetch jobs:", error);
         }
     };
+
+    const toggleVisibility = async (jobId, newVisibility) => {
+        try {
+            const res = await axios.patch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/department-jobs/visibility/${jobId}`, {
+                visible: newVisibility,
+            });
+
+            if (res.data.success) {
+                setJobs((prevJobs) =>
+                    prevJobs.map((job) =>
+                        job._id === jobId ? { ...job, visible: newVisibility } : job
+                    )
+                );
+            }
+        } catch (error) {
+            console.error("Failed to update visibility:", error);
+        }
+    };
+    
+    
+    
 
     useEffect(() => {
         fetchJobs();
@@ -110,7 +133,14 @@ const Orders = () => {
                                     <TableCell>{dayjs(job.lastDateOfSubmission).format("DD MMM YYYY")}</TableCell>
                                     <TableCell>{dayjs(job.postedOn).format("DD MMM YYYY")}</TableCell>
                                     <TableCell>{job.departmentType}</TableCell>
-                                    <TableCell>{job.departmentId?.name}</TableCell>       
+                                    <TableCell>{job.departmentId?.name}</TableCell>
+                                    <TableCell>
+                                        <Switch
+                                            checked={job.visible}
+                                            onChange={() => toggleVisibility(job._id, !job.visible)}
+                                            color="primary"
+                                        />
+                                    </TableCell>     
                                 </TableRow>
                             ))}
                     </TableBody>
